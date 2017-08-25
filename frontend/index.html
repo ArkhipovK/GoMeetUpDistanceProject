@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Directions service</title>
+    <style>
+        /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+        
+        #map {
+            height: 100%;
+        }
+        /* Optional: Makes the sample page fill the window. */
+        
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        #floating-panel {
+            position: absolute;
+            top: 10px;
+            left: 25%;
+            z-index: 5;
+            background-color: #fff;
+            padding: 5px;
+            border: 1px solid #999;
+            text-align: center;
+            font-family: 'Roboto', 'sans-serif';
+            line-height: 30px;
+            padding-left: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="floating-panel">
+        <b>Начало: </b>
+        <input id="start" type="text">
+        <b>Конец: </b>
+        <input id="end" type="text">
+        <br/>
+        <button id="submit">Расчитать путь</button>
+        <br/>
+        <div id="distance">
+
+        </div>
+
+    </div>
+    <div id="map"></div>
+    <script>
+        function initMap() {
+            var directionsService = new google.maps.DirectionsService;
+            var directionsDisplay = new google.maps.DirectionsRenderer;
+
+            var map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 7,
+                center: {
+                    lat: 58.9082519,
+                    lng: 56.2706519
+                }
+            });
+            directionsDisplay.setMap(map);
+
+            var onChangeHandler = function() {
+                //calculateAndDisplayRoute(directionsDisplay);
+                calculateAndDisplayRoute(directionsService, directionsDisplay);
+
+            };
+            document.getElementById('submit').addEventListener('click', onChangeHandler);
+
+        }
+
+        // function calculateAndDisplayRoute(directionsService, directionsDisplay) {
+        //     directionsService.route({
+        //         origin: document.getElementById('start').value,
+        //         destination: document.getElementById('end').value,
+        //         travelMode: 'DRIVING'
+        //     }, function(response, status) {
+        //         if (status === 'OK') {
+        //             console.log(response);
+        //             directionsDisplay.setDirections(response);
+        //         } else {
+        //             window.alert('Directions request failed due to ' + status);
+        //         }
+        //     });
+        // }
+
+
+        function calculateAndDisplayRoute(directionsService, directionsDisplay) {
+            fetch(encodeURI('http://localhost:8080?start=' + document.getElementById('start').value + '&end=' + document.getElementById('end').value), {
+                    mode: 'cors'
+                })
+                .then(function(response) {
+                    return response.text();
+
+                })
+                .then(function(resp) {
+                    resp = JSON.parse(resp);
+                    console.log(resp);
+                    var dist = document.getElementById("distance");
+                    dist.innerHTML = ' <b>Расстояние:</b> \
+                                        <br/>\
+                                        <b>' + resp.routes[0].legs[0].distance.text + '</b>'
+                    directionsService.route({
+                        origin: document.getElementById('start').value,
+                        destination: document.getElementById('end').value,
+                        travelMode: 'DRIVING'
+                    }, function(response, status) {
+                        if (status === 'OK') {
+                            console.log(response);
+                            directionsDisplay.setDirections(response);
+                        } else {
+                            window.alert('Directions request failed due to ' + status);
+                        }
+                    });
+                });
+        }
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBfiYm6_SfxdPuH173UQQjBRutC6gyPmVA&callback=initMap">
+    </script>
+</body>
+
+</html>
